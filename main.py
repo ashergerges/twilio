@@ -26,8 +26,8 @@ def start_call(data: CallRequest):
     call = client.calls.create(
         to=data.to,
         from_=data.from_number,
-        record=True,
-        url="https://YOUR_RENDER_DOMAIN.onrender.com/twiml"
+        record=True,  # 🎙️ تسجيل
+        url="https://twilio-780j.onrender.com/twiml"  # ✅ الدومين الحقيقي
     )
 
     return {
