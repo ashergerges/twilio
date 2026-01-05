@@ -1,11 +1,7 @@
-import os
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException, Form
 from twilio.rest import Client
-from dotenv import load_dotenv
 from fastapi.responses import Response
-
-load_dotenv()
+import os
 
 app = FastAPI()
 
@@ -14,27 +10,31 @@ client = Client(
     os.environ["TWILIO_AUTH_TOKEN"]
 )
 
-class CallRequest(BaseModel):
-    from_number: str
-    to: str
-
 @app.post("/start-call")
-def start_call(data: CallRequest):
-    if not data.from_number or not data.to:
-        raise HTTPException(status_code=400, detail="from and to required")
+def start_call(
+    from_number: str = Form(...),
+    to: str = Form(...)
+):
+    try:
+        call = client.calls.create(
+            to=to,
+            from_=from_number,
+            record=True,
+            url="https://twilio-780j.onrender.com/twiml"
+        )
 
-    call = client.calls.create(
-        to=data.to,
-        from_=data.from_number,
-        record=True,  # 🎙️ تسجيل
-        url="https://twilio-780j.onrender.com/twiml"  # ✅ الدومين الحقيقي
-    )
+        return {
+            "callSid": call.sid,
+            "from": from_number,
+            "to": to
+        }
 
-    return {
-        "callSid": call.sid,
-        "from": data.from_number,
-        "to": data.to
-    }
+    except Exception as e:
+        # 👈 ده هيطلع السبب الحقيقي
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
 
 @app.api_route("/twiml", methods=["GET", "POST"])
 def twiml():
